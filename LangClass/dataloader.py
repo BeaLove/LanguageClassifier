@@ -14,17 +14,20 @@ class SentenceData(Dataset):
         self.dataset.append('SA1.WAV.wav')
         self.lang_idx.append(2)
 
-
-
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, item):
         path = os.path.join(self.data_dir, self.dataset[item])
         wav = torchaudio.load(path)
-        idx = self.lang_idx[item]
-        return wav, idx
+        sample_rate = wav[1]
+        target = self.lang_idx[item]
+        sample = wav[0]
+        #TODO limit sample length to known sentence length
+        return sample, target
 
-dataset =  SentenceData(dataset_dir='data')
-dataset.__getitem__(0)
+if __name__== '__main__':
+    """debug code"""
+    dataset =  SentenceData(dataset_dir='data')
+    dataset.__getitem__(0)
 

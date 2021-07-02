@@ -106,6 +106,7 @@ class Trainer():
         else:
             self.best_model = epoch
             self.global_loss = loss.cpu().detach().item()
+            self.patience = 10
             print("val loss improved!")
         if self.patience == 0:
             return True

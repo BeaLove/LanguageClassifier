@@ -123,7 +123,7 @@ def parse_args(argv=None):
     parser.add_argument('--epochs', dest='epochs', help='training epochs', type=int)
     parser.add_argument('--patience', dest='patience', help='early stop patience', default=5, type=int)
     parser.add_argument('--train_from', dest='train_from', default=None, help='resume training from checkpoint', type=str)
-    parser.add_argument('-learning_rate', dest='lr', default=1e-2, type=float)
+    parser.add_argument('--learning_rate', dest='lr', default=1e-2, type=float)
     '''currently not used'''
     parser.add_argument('--warm_up', dest='warm_up', default=0, type=int, help='number of warmup steps for optimizer')
     parser.add_argument('--decay_steps', dest='decay', default=0, type=int, help='number of steps to decay learning rate' )
@@ -133,6 +133,7 @@ def parse_args(argv=None):
 
 if __name__ == "__main__":
     args = parse_args()
-    trainer = Trainer(data_dir=args.dataset_dir, checkpoint=args.train_from, checkpoints_dir=args.ckpt_dir, log_dir=args.log_dir, patience=args.patience)
+    trainer = Trainer(data_dir=args.dataset_dir, checkpoint=args.train_from, checkpoints_dir=args.ckpt_dir, lr=args.lr,
+                      log_dir=args.log_dir, patience=args.patience)
     trainer.train(epochs=args.epochs)
 

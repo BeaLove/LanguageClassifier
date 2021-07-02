@@ -1,33 +1,41 @@
+import torch
 from torch.utils.data import Dataset
 import torchaudio
 import os
 
 class SentenceData(Dataset):
-    def __init__(self, dataset_dir):
+    def __init__(self, dataset_dir, sample_len=5):
         self.data_dir = dataset_dir
-        dataset_arabic =[] #TODO get dataset
-        dataset_eng = []
-        dataset_swe = []
-        self.dataset = dataset_arabic + dataset_eng + dataset_swe
-        self.lang_idx = [1]*len(dataset_arabic) + [2]*len(dataset_eng) + [3]*len(dataset_swe)
+        self.sample_len = sample_len
+        self.lang_code = []
+        self.dataset = []
+        for root, dirs, files in os.walk(self.data_dir, topdown=True):
+            for file in files:
+                self.dataset.append(os.path.join(root, file))
+                lang = root.split("_")[-1]
+                self.lang_code.append(lang)
+        self.code_to_idx = {"en": 0, "ar": 1, "sv": 2}
+        self.lang_idx = [self.code_to_idx[lang] for lang in self.lang_code]
         ##test: delete after debug
-        self.dataset.append('SA1.WAV.wav')
-        self.lang_idx.append(2)
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, item):
-        path = os.path.join(self.data_dir, self.dataset[item])
-        wav = torchaudio.load(path)
-        sample_rate = wav[1]
+        path = self.dataset[item]
+        wav, samplerate = torchaudio.load(path, num_frames=16000*self.sample_len)
+        clip_len = samplerate*self.sample_len
+        #zero-pad short clips:
+        if wav.shape[1] < clip_len:
+            zero_pad = torch.zeros((1, (clip_len - wav.shape[1])))
+            wav = torch.cat((wav, zero_pad), axis=1)
+        elif wav.shape[1] > clip_len:
+            wav = wav[:,:clip_len]
         target = self.lang_idx[item]
-        sample = wav[0]
-        #TODO limit sample length to known sentence length
-        return sample, target
+        return wav, target
 
 if __name__== '__main__':
     """debug code"""
-    dataset =  SentenceData(dataset_dir='data')
+    dataset =  SentenceData(dataset_dir='data/train')
     dataset.__getitem__(0)
 

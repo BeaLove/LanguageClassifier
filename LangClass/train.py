@@ -77,9 +77,9 @@ class Trainer():
                 y = y.to(self.device)
                 x = x[0, :, :]
                 output = self.model.forward(x)
-                loss = self.loss_criterion(output, y).cpu().detach().item()
-                sum_loss += loss
-                metric = {"running validation loss: ": loss, "avg val loss": self.avg_val_loss}
+                loss = self.loss_criterion(output, y)
+                sum_loss += loss.cpu().detach().item()
+                metric = {"running validation loss: ": loss.cpu().detach().item(), "avg val loss": self.avg_val_loss}
                 batch_i.set_postfix(metric)
             self.avg_val_loss = sum_loss/len(self.val_set)
         self.tensorboard_writer.add_scalar(tag="val loss", scalar_value=self.avg_val_loss, global_step=epoch)
@@ -102,6 +102,7 @@ class Trainer():
             print("val loss did not improve, decreasing patience to: {}".format(self.patience))
         else:
             self.best_model = epoch
+            self.global_loss = loss
             print("val loss improved!")
         if self.patience == 0:
             return True

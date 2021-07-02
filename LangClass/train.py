@@ -66,6 +66,10 @@ class Trainer():
             #self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias, global_step=epoch*step)
+            self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.weight.grad, global_step=epoch*step)
+            self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.bias.grad, global_step=epoch * step)
+            print(self.model.fc.bias.grad)
+            print(self.model.fc.weight.grad)
         self.avg_train_loss = sum_loss/len(self.trainset)
 
     def validate(self, epoch):

@@ -118,6 +118,6 @@ def parse_args(argv=None):
 
 if __name__ == "__main__":
     args = parse_args()
-    trainer = Trainer(data_dir=args.dataset_dir, checkpoints_dir=args.checkpoints_dir, log_dir=args.log_dir, patience=args.patience)
+    trainer = Trainer(data_dir=args.dataset_dir, checkpoints_dir=args.ckpt_dir, log_dir=args.log_dir, patience=args.patience)
     trainer.train(epochs=args.epochs)
 

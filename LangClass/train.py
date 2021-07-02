@@ -12,13 +12,13 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class Trainer():
-    def __init__(self, data_dir, log_dir, patience, checkpoints_dir, checkpoint):
+    def __init__(self, data_dir, log_dir, patience, checkpoints_dir, checkpoint, lr):
         if checkpoint is not None:
             print("training from: ", checkpoint)
             self.model = torch.load(checkpoint)
         else:
             self.model = LanguageClassifier()
-        self.optim = torch.optim.SGD(self.model.parameters(), lr=1e-3)
+        self.optim = torch.optim.SGD(self.model.parameters(), lr=lr)
         print("optimizer: ", self.optim)
         self.dataset = SentenceData(data_dir)
         indices = torch.randperm(len(self.dataset))
@@ -123,8 +123,8 @@ def parse_args(argv=None):
     parser.add_argument('--epochs', dest='epochs', help='training epochs', type=int)
     parser.add_argument('--patience', dest='patience', help='early stop patience', default=5, type=int)
     parser.add_argument('--train_from', dest='train_from', default=None, help='resume training from checkpoint', type=str)
-    '''currently not used'''
     parser.add_argument('-learning_rate', dest='lr', default=1e-2, type=float)
+    '''currently not used'''
     parser.add_argument('--warm_up', dest='warm_up', default=0, type=int, help='number of warmup steps for optimizer')
     parser.add_argument('--decay_steps', dest='decay', default=0, type=int, help='number of steps to decay learning rate' )
     args = parser.parse_args()

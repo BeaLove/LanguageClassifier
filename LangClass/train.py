@@ -19,6 +19,7 @@ class Trainer():
         else:
             self.model = LanguageClassifier()
         self.optim = torch.optim.SGD(self.model.parameters(), lr=1e-3)
+        print("optimizer: ", self.optim)
         self.dataset = SentenceData(data_dir)
         indices = torch.randperm(len(self.dataset))
         val_split = int((len(indices)*0.05))

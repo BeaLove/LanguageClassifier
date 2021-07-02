@@ -14,6 +14,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 class Trainer():
     def __init__(self, data_dir, log_dir, patience, checkpoints_dir, checkpoint):
         if checkpoint is not None:
+            print("training from: ", checkpoint)
             self.model = torch.load(checkpoint)
         else:
             self.model = LanguageClassifier()

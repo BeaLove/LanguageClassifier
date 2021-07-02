@@ -58,8 +58,8 @@ class Trainer():
             self.optim.zero_grad()
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            sum_loss += loss.cpu().detach().item()
             loss.backward()
+            sum_loss += loss.cpu().detach().item()
             self.optim.step()
             metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
             batch_i.set_postfix(metric)

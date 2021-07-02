@@ -99,6 +99,7 @@ class Trainer():
 
 
     def early_stop_callback(self, loss, epoch):
+        print("in early stop callback: loss: {} best loss: {}".format(loss, self.avg_val_loss))
         if loss > self.global_loss:
             self.patience -= 1
             print("val loss did not improve, decreasing patience to: {}".format(self.patience))

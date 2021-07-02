@@ -18,7 +18,7 @@ class Trainer():
             self.model = torch.load(checkpoint)
         else:
             self.model = LanguageClassifier()
-        self.optim = torch.optim.Adam(self.model.parameters())
+        self.optim = torch.optim.SGD(self.model.parameters(), lr=1e-3)
         self.dataset = SentenceData(data_dir)
         indices = torch.randperm(len(self.dataset))
         val_split = int((len(indices)*0.05))
@@ -42,7 +42,7 @@ class Trainer():
             self.device = 'cpu'
             print('using cpu!')
         self.model = self.model.to(self.device)
-        print(self.model)
+        #print(self.model)
         print("dataset size: training {}, validation {}".format(len(self.trainset), len(self.val_set)))
 
     def train_epoch(self, epoch):
@@ -101,7 +101,7 @@ class Trainer():
 
 
     def early_stop_callback(self, loss, epoch):
-        print("in early stop callback: loss: {} best loss: {}".format(loss, self.avg_val_loss))
+        print("in early stop callback: loss: {} best loss: {}".format(loss, self.global_loss))
         if loss > self.global_loss:
             self.patience -= 1
             print("val loss did not improve, decreasing patience to: {}".format(self.patience))

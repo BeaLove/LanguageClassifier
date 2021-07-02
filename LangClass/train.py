@@ -60,13 +60,14 @@ class Trainer():
             sum_loss += loss.cpu().detach().item()
             loss.backward()
             self.optim.step()
-            metric = {"train loss: ": loss, "Average train loss: ": self.avg_train_loss}
+            metric = {"train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
             batch_i.set_postfix(metric)
             self.tensorboard_writer.add_scalar(tag='train_loss', scalar_value=loss, global_step=epoch*step)
             #self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias, global_step=epoch*step)
-        avg_train_loss = sum_loss/len(self.trainset)
+        self.avg_train_loss = sum_loss/len(self.trainset)
+
     def validate(self, epoch):
         batch_i = tqdm(self.val_loader)
         batch_i.set_description(desc="validating")
@@ -103,7 +104,7 @@ class Trainer():
             print("val loss did not improve, decreasing patience to: {}".format(self.patience))
         else:
             self.best_model = epoch
-            self.global_loss = loss
+            self.global_loss = loss.cpu().detach().item()
             print("val loss improved!")
         if self.patience == 0:
             return True

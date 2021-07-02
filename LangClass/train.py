@@ -60,7 +60,7 @@ class Trainer():
             sum_loss += loss.cpu().detach().item()
             loss.backward()
             self.optim.step()
-            metric = {"train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
+            metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
             batch_i.set_postfix(metric)
             self.tensorboard_writer.add_scalar(tag='train_loss', scalar_value=loss, global_step=epoch*step)
             #self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)

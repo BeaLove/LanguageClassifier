@@ -20,9 +20,9 @@ class Trainer():
         indices = torch.randperm(len(self.dataset))
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])
-        self.trainset = Subset(self.dataset, indices=indices[2500:]) ##TODO change when doing full run!
-        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=0, batch_size=1)
-        self.val_loader = DataLoader(self.val_set, shuffle=True, num_workers=0, batch_size=1)
+        self.trainset = Subset(self.dataset, indices=indices[val_split:])
+        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=3, batch_size=1)
+        self.val_loader = DataLoader(self.val_set, shuffle=True, num_workers=3, batch_size=1)
         self.loss_criterion = torch.nn.CrossEntropyLoss()
         self.tensorboard_writer = torch.utils.tensorboard.SummaryWriter(log_dir=log_dir)
         self.global_loss = 1000
@@ -37,6 +37,8 @@ class Trainer():
             self.device = 'cpu'
             print('using cpu!')
         self.model = self.model.to(self.device)
+        print(self.model)
+        print("dataset size: training {}, validation {}".format(len(self.trainset), len(self.val_set)))
 
     def train_epoch(self, epoch):
         batch_i = tqdm(self.train_loader)
@@ -57,6 +59,7 @@ class Trainer():
             batch_i.set_postfix(metric)
 
             self.tensorboard_writer.add_scalar(tag='train_loss', scalar_value=loss, global_step=epoch*step)
+            self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias, global_step=epoch*step)
 

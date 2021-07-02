@@ -32,6 +32,8 @@ class Trainer():
         os.makedirs(checkpoints_dir, exist_ok=True)
         self.checkpt_dir = checkpoints_dir
         self.best_model = 0
+        self.avg_val_loss = 0
+        self.avg_train_loss = 0
         if torch.cuda.is_available():
             self.device = 'cuda:0'
             print("using cuda")
@@ -45,6 +47,7 @@ class Trainer():
     def train_epoch(self, epoch):
         batch_i = tqdm(self.train_loader)
         batch_i.set_description(desc="Training")
+        sum_loss = 0
         for step, sample in enumerate(batch_i):
             x, y = sample
             x = x.to(self.device)
@@ -53,15 +56,16 @@ class Trainer():
             self.optim.zero_grad()
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
+            sum_loss += loss.cpu().detach().item()
             loss.backward()
             self.optim.step()
-            metric = {"train loss: ": loss.cpu().detach().item()}
+            metric = {"train loss: ": loss, "Average train loss: ": self.avg_train_loss}
             batch_i.set_postfix(metric)
             self.tensorboard_writer.add_scalar(tag='train_loss', scalar_value=loss, global_step=epoch*step)
             #self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias, global_step=epoch*step)
-
+        avg_train_loss = sum_loss/len(self.trainset)
     def validate(self, epoch):
         batch_i = tqdm(self.val_loader)
         batch_i.set_description(desc="validating")
@@ -73,10 +77,13 @@ class Trainer():
                 y = y.to(self.device)
                 x = x[0, :, :]
                 output = self.model.forward(x)
-                sum_loss += self.loss_criterion(output, y)
-            loss = sum_loss/len(self.val_set)
-        self.tensorboard_writer.add_scalar(tag="val loss", scalar_value=loss, global_step=epoch)
-        return loss
+                loss = self.loss_criterion(output, y).cpu().detach().item()
+                sum_loss += loss
+                metric = {"running validation loss: ": loss, "avg val loss": self.avg_val_loss}
+                batch_i.set_postfix(metric)
+            self.avg_val_loss = sum_loss/len(self.val_set)
+        self.tensorboard_writer.add_scalar(tag="val loss", scalar_value=self.avg_val_loss, global_step=epoch)
+        return self.avg_val_loss
 
 
     def train(self, epochs):

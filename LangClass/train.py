@@ -59,7 +59,7 @@ class Trainer():
             batch_i.set_postfix(metric)
 
             self.tensorboard_writer.add_scalar(tag='train_loss', scalar_value=loss, global_step=epoch*step)
-            self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)
+            #self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias, global_step=epoch*step)
 

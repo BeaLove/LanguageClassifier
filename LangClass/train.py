@@ -12,7 +12,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class Trainer():
-    def __init__(self, data_dir, log_dir, patience, checkpoints_dir, checkpoint,
+    def __init__(self, data_dir, log_dir, batch_size, patience, checkpoints_dir, checkpoint,
                  lr, max_lr, optim, warmup_steps, decay_steps, unfreeze_after):
         '''initialize training with options:
             -start training from checkpoint or from scratch
@@ -58,6 +58,7 @@ class Trainer():
         self.best_model = 0
         self.avg_val_loss = 0
         self.avg_train_loss = 0
+        self.batch_size = batch_size
         if torch.cuda.is_available():
             self.device = 'cuda:0'
             print("using cuda")
@@ -70,22 +71,30 @@ class Trainer():
 
     def train_epoch(self, epoch):
         '''runs one epoch of training (one full run through the training data'''
-        batch_i = tqdm(self.train_loader)
-        batch_i.set_description(desc="Training")
+        dataset = tqdm(self.train_loader)
+        dataset.set_description(desc="Training")
         sum_loss = 0
-        for step, sample in enumerate(batch_i):
+        batch = 0
+        accum_loss = 0
+        for step, sample in enumerate(dataset):
             x, y = sample
             x = x.to(self.device)
             y = y.to(self.device)
             x = x[0,:,:]
-            self.optim.zero_grad()
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            loss.backward()
+            accum_loss += loss
+            batch += 1
+            '''average loss over batch size training samples and perform backprop'''
+            if batch == self.batch_size:
+                accum_loss = accum_loss/ self.batch_size
+                accum_loss.backward()
+                accum_loss = 0
+                self.optim.step()
+                self.optim.zero_grad()
             sum_loss += loss.cpu().detach().item()
-            self.optim.step()
             metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
-            batch_i.set_postfix(metric)
+            dataset.set_postfix(metric)
             if self.use_warmup and step <= self.warmup_steps:
                 self.lr_rampup()
             elif self.use_warmup and step > self.warmup_steps:
@@ -172,6 +181,7 @@ def parse_args(argv=None):
     parser.add_argument('--max_lr', dest='max_lr', default=5e-3, type=float, help='maximum learning rate attained after steps = warmup steps')
     parser.add_argument('--decay_steps', dest='decay', default=24255, type=int, help='number of steps to decay learning rate' )
     parser.add_argument('--unfreeze_after', dest='unfreeze_after', default=5000, type=int, help="unfreeze pretrained layers after this number of steps, defalt = warmup steps")
+    parser.add_argument('--batch_size', dest='batch_size', default=32, type=int, help='batch size')
     args = parser.parse_args()
     print(args)
     return args

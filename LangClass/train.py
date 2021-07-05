@@ -91,7 +91,6 @@ class Trainer():
                 accum_loss.backward()
                 accum_loss = 0
                 self.optim.step()
-                self.optim.zero_grad()
                 metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
                           "smoothed loss ": accum_loss,
                           "Average train loss: ": self.avg_train_loss}
@@ -105,7 +104,7 @@ class Trainer():
                                                       global_step=epoch * step)
                 self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                       global_step=epoch * step)
-
+            self.optim.zero_grad()
             if self.use_warmup and step <= self.warmup_steps:
                 self.lr_rampup()
             elif self.use_warmup and step > self.warmup_steps:

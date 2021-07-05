@@ -74,7 +74,8 @@ class Trainer():
         dataset.set_description(desc="Training")
         sum_loss = 0
         batch = 0
-        accum_loss = 0
+        batch_losses = []
+        total_losses = []
         for step, sample in enumerate(dataset):
             x, y = sample
             x = x.to(self.device)
@@ -82,20 +83,22 @@ class Trainer():
             x = x[0,:,:]
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            accum_loss += loss
+            batch_losses.append(loss)
+            total_losses.append(loss)
             batch += 1
             '''average loss over batch size training samples and perform backprop,
                 this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
             if batch == self.batch_size:
-                accum_loss = accum_loss/ self.batch_size
+                accum_loss = sum(batch_losses)/len(batch_losses)
                 accum_loss.backward()
-                accum_loss = 0
+                batch_losses = []
                 self.optim.step()
-                metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
+                metric = {"epoch: ": epoch,
                           "smoothed loss ": accum_loss,
                           "Average train loss: ": self.avg_train_loss}
                 dataset.set_postfix(metric)
                 '''log weights and gradients after update'''
+                self.tensorboard_writer.add_scalar(tag='batch smoothed train loss', scalar_value=accum_loss, global_step=epoch*step)
                 self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
                                                       global_step=epoch * step)
                 self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias,
@@ -113,21 +116,9 @@ class Trainer():
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained(self.model.encoder)
                 self.optim.add_param_group({'encoder': self.model.encoder})
-
-            #add logs to tensorboard
-            if batch == 0:
-                running_loss = loss
-            else:
-                running_loss = accum_loss / batch
-            self.tensorboard_writer.add_scalar(tag='smoothed train loss', scalar_value=running_loss, global_step=epoch*step)
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
-
-            metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
-                      "smoothed loss ": running_loss,
-                      "Average train loss: ": self.avg_train_loss}
-            dataset.set_postfix(metric)
             sum_loss += loss.cpu().detach().item()
-        self.avg_train_loss = sum_loss/len(self.trainset)
+        self.avg_train_loss = sum(total_losses)/len(total_losses)
 
     def validate(self, epoch):
         batch_i = tqdm(self.val_loader)

@@ -93,6 +93,10 @@ class Trainer():
                 accum_loss = 0
                 self.optim.step()
                 self.optim.zero_grad()
+                metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
+                          "smoothed loss ": accum_loss.cpu().detach().item(),
+                          "Average train loss: ": self.avg_train_loss}
+                dataset.set_postfix(metric)
                 '''log weights and gradients after update'''
                 self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
                                                       global_step=epoch * step)
@@ -102,9 +106,7 @@ class Trainer():
                                                       global_step=epoch * step)
                 self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                       global_step=epoch * step)
-            sum_loss += loss.cpu().detach().item()
-            metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
-            dataset.set_postfix(metric)
+
             if self.use_warmup and step <= self.warmup_steps:
                 self.lr_rampup()
             elif self.use_warmup and step > self.warmup_steps:
@@ -118,10 +120,15 @@ class Trainer():
             if batch == 0:
                 running_loss = loss
             else:
-                running_loss = accum_loss /batch
+                running_loss = accum_loss / batch
             self.tensorboard_writer.add_scalar(tag='smoothed train loss', scalar_value=running_loss, global_step=epoch*step)
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
 
+        metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
+                  "smoothed loss ": accum_loss.cpu().detach().item(),
+                  "Average train loss: ": self.avg_train_loss}
+        dataset.set_postfix(metric)
+        sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum_loss/len(self.trainset)
 
     def validate(self, epoch):

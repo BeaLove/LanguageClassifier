@@ -107,6 +107,7 @@ class Trainer():
                 self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                       global_step=epoch * step)
                 batch = 0
+                batch_losses = torch.zeros(self.batch_size)
 
             self.optim.zero_grad()
             if self.use_warmup and step <= self.warmup_steps:

@@ -123,11 +123,11 @@ class Trainer():
             self.tensorboard_writer.add_scalar(tag='smoothed train loss', scalar_value=running_loss, global_step=epoch*step)
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
 
-        metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
-                  "smoothed loss ": accum_loss,
-                  "Average train loss: ": self.avg_train_loss}
-        dataset.set_postfix(metric)
-        sum_loss += loss.cpu().detach().item()
+            metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
+                      "smoothed loss ": accum_loss,
+                      "Average train loss: ": self.avg_train_loss}
+            dataset.set_postfix(metric)
+            sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum_loss/len(self.trainset)
 
     def validate(self, epoch):

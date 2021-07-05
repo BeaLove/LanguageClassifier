@@ -74,7 +74,7 @@ class Trainer():
         dataset.set_description(desc="Training")
         sum_loss = 0
         batch = 0
-        batch_losses = torch.zeros(self.batch_size)
+        #batch_losses = torch.zeros(self.batch_size)
         total_losses = []
         for step, sample in enumerate(dataset):
             x, y = sample
@@ -83,30 +83,31 @@ class Trainer():
             x = x[0,:,:]
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            batch_losses[batch] = loss
+            #batch_losses[batch] = loss
             total_losses.append(loss)
-            batch += 1
-            '''average loss over batch size training samples and perform backprop,
-                this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
-            if batch == self.batch_size:
-                batch_losses.mean().backward()
-                self.optim.step()
-                metric = {"epoch: ": epoch,
-                          "smoothed loss ": batch_losses.mean().item(),
-                          "Average train loss: ": self.avg_train_loss}
-                dataset.set_postfix(metric)
-                '''log weights and gradients after update'''
-                self.tensorboard_writer.add_scalar(tag='batch smoothed train loss', scalar_value=batch_losses.mean(), global_step=epoch*step)
-                self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
-                                                      global_step=epoch * step)
-                self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias,
-                                                      global_step=epoch * step)
-                self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.weight.grad,
-                                                      global_step=epoch * step)
-                self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
-                                                      global_step=epoch * step)
-                batch = 0
-                batch_losses = torch.zeros(self.batch_size)
+            #batch += 1
+            #'''average loss over batch size training samples and perform backprop,
+            #    this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
+            #if batch == self.batch_size:
+                #batch_losses.mean().backward()
+            loss.backward()
+            self.optim.step()
+            metric = {"epoch: ": epoch,
+                      "smoothed loss ": loss.cpu().detach().item(),
+                      "Average train loss: ": self.avg_train_loss}
+            dataset.set_postfix(metric)
+            '''log weights and gradients after update'''
+            self.tensorboard_writer.add_scalar(tag='batch smoothed train loss', scalar_value=loss.cpu().detach().item(), global_step=epoch*step)
+            self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
+                                                  global_step=epoch * step)
+            self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias,
+                                                  global_step=epoch * step)
+            self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.weight.grad,
+                                                  global_step=epoch * step)
+            self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
+                                                  global_step=epoch * step)
+            #batch = 0
+            #batch_losses = torch.zeros(self.batch_size)
 
             self.optim.zero_grad()
             if self.use_warmup and step <= self.warmup_steps:

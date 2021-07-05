@@ -89,6 +89,7 @@ class Trainer():
             '''average loss over batch size training samples and perform backprop,
                 this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
             if batch == self.batch_size:
+
                 accum_loss = sum(batch_losses)/len(batch_losses)
                 accum_loss.backward()
                 batch_losses = []
@@ -108,6 +109,7 @@ class Trainer():
                 self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                       global_step=epoch * step)
                 batch = 0
+                print('batch complete')
             self.optim.zero_grad()
             if self.use_warmup and step <= self.warmup_steps:
                 self.lr_rampup()

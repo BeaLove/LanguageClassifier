@@ -114,7 +114,7 @@ class Trainer():
                 self.lr_rampup()
             elif self.use_warmup and step > self.warmup_steps:
                 self.lr_decay()
-            if step == self.unfreeze_after:
+            if step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained(self.model.encoder)
                 self.optim.add_param_group({'encoder': self.model.encoder})

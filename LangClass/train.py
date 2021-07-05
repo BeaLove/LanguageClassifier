@@ -123,7 +123,7 @@ class Trainer():
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
 
             metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
-                      "smoothed loss ": running_loss,
+                      "smoothed loss ": running_loss.cpu().detach().item(),
                       "Average train loss: ": self.avg_train_loss}
             dataset.set_postfix(metric)
             sum_loss += loss.cpu().detach().item()
@@ -168,6 +168,7 @@ class Trainer():
             torch.save(self.model, os.path.join(self.checkpt_dir, chkpt_name))
             if self.early_stop_callback(val_loss, epoch):
                 print("Validation loss did not improve for {} epochs, stopping training!")
+                break
 
     def early_stop_callback(self, loss, epoch):
         print("in early stop callback: loss: {} best loss: {}".format(loss, self.global_loss))

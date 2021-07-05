@@ -90,7 +90,6 @@ class Trainer():
                 this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
             if batch == self.batch_size:
                 batch_losses.mean().backward()
-
                 self.optim.step()
                 metric = {"epoch: ": epoch,
                           "smoothed loss ": batch_losses.mean().item(),

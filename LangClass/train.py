@@ -74,7 +74,7 @@ class Trainer():
         dataset.set_description(desc="Training")
         sum_loss = 0
         batch = 0
-        batch_losses = []
+        batch_losses = torch.zeros(self.batch_size)
         total_losses = []
         for step, sample in enumerate(dataset):
             x, y = sample
@@ -83,19 +83,16 @@ class Trainer():
             x = x[0,:,:]
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            batch_losses.append(loss)
+            batch_losses[batch] = loss
             total_losses.append(loss)
             batch += 1
             '''average loss over batch size training samples and perform backprop,
                 this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
             if batch == self.batch_size:
-
-                accum_loss = sum(batch_losses)/len(batch_losses)
-                accum_loss.backward()
-                batch_losses = []
+                batch_losses.mean().backward()
                 self.optim.step()
                 metric = {"epoch: ": epoch,
-                          "smoothed loss ": accum_loss,
+                          "smoothed loss ": batch_losses.mean().item(),
                           "Average train loss: ": self.avg_train_loss}
                 dataset.set_postfix(metric)
                 '''log weights and gradients after update'''

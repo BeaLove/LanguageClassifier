@@ -93,6 +93,15 @@ class Trainer():
                 accum_loss = 0
                 self.optim.step()
                 self.optim.zero_grad()
+                '''log weights and gradients after update'''
+                self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
+                                                      global_step=epoch * step)
+                self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias,
+                                                      global_step=epoch * step)
+                self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.weight.grad,
+                                                      global_step=epoch * step)
+                self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
+                                                      global_step=epoch * step)
             sum_loss += loss.cpu().detach().item()
             metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
             dataset.set_postfix(metric)
@@ -106,12 +115,13 @@ class Trainer():
                 self.optim.add_param_group({'encoder': self.model.encoder})
 
             #add logs to tensorboard
-            self.tensorboard_writer.add_scalar(tag='train_loss', scalar_value=loss, global_step=epoch*step)
+            if batch == 0:
+                running_loss = loss
+            else:
+                running_loss = accum_loss /batch
+            self.tensorboard_writer.add_scalar(tag='smoothed train loss', scalar_value=running_loss, global_step=epoch*step)
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
-            self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight, global_step=epoch*step)
-            self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias, global_step=epoch*step)
-            self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.weight.grad, global_step=epoch*step)
-            self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad, global_step=epoch * step)
+
         self.avg_train_loss = sum_loss/len(self.trainset)
 
     def validate(self, epoch):
@@ -127,7 +137,7 @@ class Trainer():
                 output = self.model.forward(x)
                 loss = self.loss_criterion(output, y)
                 sum_loss += loss.cpu().detach().item()
-                metric = {"running validation loss: ": loss.cpu().detach().item(), "avg val loss": self.avg_val_loss}
+                metric = {"step-wise validation loss: ": loss.cpu().detach().item(), "avg val loss": self.avg_val_loss}
                 batch_i.set_postfix(metric)
             self.avg_val_loss = sum_loss/len(self.val_set)
         self.tensorboard_writer.add_scalar(tag="val loss", scalar_value=self.avg_val_loss, global_step=epoch)

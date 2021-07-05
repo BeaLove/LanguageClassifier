@@ -51,6 +51,7 @@ class Trainer():
         self.tensorboard_writer = torch.utils.tensorboard.SummaryWriter(log_dir=log_dir)
         self.global_loss = 1000
         self.patience = patience
+        self.max_patience = patience
         os.makedirs(checkpoints_dir, exist_ok=True)
         self.checkpt_dir = checkpoints_dir
         self.best_model = 0
@@ -92,7 +93,7 @@ class Trainer():
                 self.optim.step()
                 self.optim.zero_grad()
                 metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
-                          "smoothed loss ": accum_loss.cpu().detach().item(),
+                          "smoothed loss ": accum_loss,
                           "Average train loss: ": self.avg_train_loss}
                 dataset.set_postfix(metric)
                 '''log weights and gradients after update'''
@@ -123,7 +124,7 @@ class Trainer():
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
 
         metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
-                  "smoothed loss ": accum_loss.cpu().detach().item(),
+                  "smoothed loss ": accum_loss,
                   "Average train loss: ": self.avg_train_loss}
         dataset.set_postfix(metric)
         sum_loss += loss.cpu().detach().item()
@@ -177,7 +178,7 @@ class Trainer():
         else:
             self.best_model = epoch
             self.global_loss = loss
-            self.patience = 10
+            self.patience = self.max_patience
             print("val loss improved!")
         if self.patience == 0:
             return True

@@ -27,8 +27,6 @@ class Trainer():
         elif optim == 'adam':
             self.optim = torch.optim.Adam(self.model.parameters(), lr=lr)
         print("optimizer: ", self.optim)
-        for idx, group in enumerate(self.optim.param_groups):
-            print(idx, group.keys())
         self.lr = lr
         self.max_lr = max_lr
         if warmup_steps != 0:

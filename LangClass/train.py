@@ -12,15 +12,37 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class Trainer():
-    def __init__(self, data_dir, log_dir, patience, checkpoints_dir, checkpoint, lr):
+    def __init__(self, data_dir, log_dir, patience, checkpoints_dir, checkpoint,
+                 lr, max_lr, optim, warmup_steps, decay_steps, unfreeze_after):
+        '''initialize training with options:
+            -start training from checkpoint or from scratch
+            -define path to data, tensorboard log directory, checkpoints directory, learning rate'''
         if checkpoint is not None:
             print("training from: ", checkpoint)
             self.model = torch.load(checkpoint)
         else:
             self.model = LanguageClassifier()
-        self.optim = torch.optim.SGD(self.model.parameters(), lr=lr)
+        if optim == 'sgd':
+            self.optim = torch.optim.SGD(self.model.parameters(), lr=lr)
+        elif optim == 'adam':
+            self.optim = torch.optim.Adam(self.model.parameters(), lr=lr)
         print("optimizer: ", self.optim)
-        self.dataset = SentenceData(data_dir)
+        for idx, group in enumerate(self.optim.param_groups):
+            print(idx, group.keys())
+        self.lr = lr
+        self.max_lr = max_lr
+        if warmup_steps != 0:
+            self.use_warmup = True
+            self.warmup_steps = warmup_steps
+        if decay_steps != 0:
+            self.decay_steps = decay_steps
+        if unfreeze_after == 0:
+            '''if unfreeze after is set to 0, will never unfreeze pretrained layer'''
+            self.unfreeze = False
+        else:
+            '''setting a custom step at which to unfreeze pretrained'''
+            self.unfreeze_after = unfreeze_after
+        self.dataset = SentenceData(data_dir) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)
         indices = torch.randperm(len(self.dataset))
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])
@@ -47,6 +69,7 @@ class Trainer():
         print("dataset size: training {}, validation {}".format(len(self.trainset), len(self.val_set)))
 
     def train_epoch(self, epoch):
+        '''runs one epoch of training (one full run through the training data'''
         batch_i = tqdm(self.train_loader)
         batch_i.set_description(desc="Training")
         sum_loss = 0
@@ -63,8 +86,18 @@ class Trainer():
             self.optim.step()
             metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(), "Average train loss: ": self.avg_train_loss}
             batch_i.set_postfix(metric)
+            if self.use_warmup and step <= self.warmup_steps:
+                self.lr_rampup()
+            elif self.use_warmup and step > self.warmup_steps:
+                self.lr_decay()
+            if step == self.unfreeze_after:
+                '''unfreeze pretrained layer for last steps'''
+                self.model.unfreeze_pretrained(self.model.encoder)
+                self.optim.add_param_group({'encoder': self.model.encoder})
+
+            #add logs to tensorboard
             self.tensorboard_writer.add_scalar(tag='train_loss', scalar_value=loss, global_step=epoch*step)
-            #self.tensorboard_writer.add_scalar(tag="learning rate", scalar_value=self.optim)
+            self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias, global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.weight.grad, global_step=epoch*step)
@@ -90,6 +123,17 @@ class Trainer():
         self.tensorboard_writer.add_scalar(tag="val loss", scalar_value=self.avg_val_loss, global_step=epoch)
         return self.avg_val_loss
 
+    def lr_rampup(self):
+        '''implements linear learning rate warmup for given number of training steps'''
+        self.lr = self.lr + self.max_lr *(1/self.warmup_steps)
+        for group in self.optim.param_groups:
+            group['lr'] = self.lr
+
+    def lr_decay(self):
+        '''decays learning rate linearly'''
+        self.lr = self.lr - self.max_lr*(1/self.decay_steps)
+        for group in self.optim.param_groups:
+            group['lr'] = self.lr
 
     def train(self, epochs):
         for epoch in range(1, epochs):
@@ -99,7 +143,6 @@ class Trainer():
             torch.save(self.model, os.path.join(self.checkpt_dir, chkpt_name))
             if self.early_stop_callback(val_loss, epoch):
                 print("Validation loss did not improve for {} epochs, stopping training!")
-
 
     def early_stop_callback(self, loss, epoch):
         print("in early stop callback: loss: {} best loss: {}".format(loss, self.global_loss))
@@ -120,13 +163,15 @@ def parse_args(argv=None):
     parser.add_argument('--dataset_dir', dest='dataset_dir', help='dataset directory', type=str)
     parser.add_argument('--checkpoints_dir', dest='ckpt_dir', default='checkpoints', type=str)
     parser.add_argument('--log_dir', dest='log_dir', default='logs', type=str)
-    parser.add_argument('--epochs', dest='epochs', help='training epochs', type=int)
+    parser.add_argument('--epochs', dest='epochs', default=10, help='training epochs', type=int)
     parser.add_argument('--patience', dest='patience', help='early stop patience', default=5, type=int)
     parser.add_argument('--train_from', dest='train_from', default=None, help='resume training from checkpoint', type=str)
-    parser.add_argument('--learning_rate', dest='lr', default=1e-2, type=float)
-    '''currently not used'''
-    parser.add_argument('--warm_up', dest='warm_up', default=0, type=int, help='number of warmup steps for optimizer')
-    parser.add_argument('--decay_steps', dest='decay', default=0, type=int, help='number of steps to decay learning rate' )
+    parser.add_argument('--learning_rate', dest='lr', default=1e-4, type=float, help='learning rate, default 1e-4, if warmup is enabled this is the starting lr')
+    parser.add_argument('--optimizer', dest='optim', default='adam', type=str, help='which optimizer to use, default is Adam')
+    parser.add_argument('--warmup', dest='warmup', default=2500, type=int, help='number of warmup steps for optimizer, default 2500, set to 0 to disable warmup')
+    parser.add_argument('--max_lr', dest='max_lr', default=5e-3, type=float, help='maximum learning rate attained after steps = warmup steps')
+    parser.add_argument('--decay_steps', dest='decay', default=24255, type=int, help='number of steps to decay learning rate' )
+    parser.add_argument('--unfreeze_after', dest='unfreeze_after', default=5000, type=int, help="unfreeze pretrained layers after this number of steps, defalt = warmup steps")
     args = parser.parse_args()
     print(args)
     return args
@@ -134,6 +179,7 @@ def parse_args(argv=None):
 if __name__ == "__main__":
     args = parse_args()
     trainer = Trainer(data_dir=args.dataset_dir, checkpoint=args.train_from, checkpoints_dir=args.ckpt_dir, lr=args.lr,
-                      log_dir=args.log_dir, patience=args.patience)
+                      log_dir=args.log_dir, patience=args.patience, max_lr=args.max_lr, optim=args.optim, warmup_steps=args.warmup,
+                      decay_steps=args.decay, unfreeze_after=args.unfreeze_after)
     trainer.train(epochs=args.epochs)
 

@@ -23,5 +23,11 @@ class LanguageClassifier(nn.Module):
         return linear
 
     def freeze_pretrained(self, layer):
+        '''freeze layers in pretrained model'''
         for param in layer.parameters():
             param.requires_grad = False
+
+    def unfreeze_pretrained(self, layer):
+        '''unfreeze layers in pretrained model'''
+        for param in layer.parameters():
+            param.requires_grad = True

@@ -90,13 +90,14 @@ class Trainer():
                 this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
             if batch == self.batch_size:
                 batch_losses.mean().backward()
+                print(batch_losses)
                 self.optim.step()
                 metric = {"epoch: ": epoch,
                           "smoothed loss ": batch_losses.mean().item(),
                           "Average train loss: ": self.avg_train_loss}
                 dataset.set_postfix(metric)
                 '''log weights and gradients after update'''
-                self.tensorboard_writer.add_scalar(tag='batch smoothed train loss', scalar_value=accum_loss, global_step=epoch*step)
+                self.tensorboard_writer.add_scalar(tag='batch smoothed train loss', scalar_value=batch_losses.mean(), global_step=epoch*step)
                 self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
                                                       global_step=epoch * step)
                 self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias,

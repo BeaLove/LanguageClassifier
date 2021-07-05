@@ -85,7 +85,8 @@ class Trainer():
             loss = self.loss_criterion(output, y)
             accum_loss += loss
             batch += 1
-            '''average loss over batch size training samples and perform backprop'''
+            '''average loss over batch size training samples and perform backprop,
+                this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
             if batch == self.batch_size:
                 accum_loss = accum_loss/ self.batch_size
                 accum_loss.backward()

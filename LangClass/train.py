@@ -190,7 +190,7 @@ def parse_args(argv=None):
 if __name__ == "__main__":
     args = parse_args()
     trainer = Trainer(data_dir=args.dataset_dir, checkpoint=args.train_from, checkpoints_dir=args.ckpt_dir, lr=args.lr,
-                      log_dir=args.log_dir, patience=args.patience, max_lr=args.max_lr, optim=args.optim, warmup_steps=args.warmup,
+                      log_dir=args.log_dir, batch_size=args.batch_size, patience=args.patience, max_lr=args.max_lr, optim=args.optim, warmup_steps=args.warmup,
                       decay_steps=args.decay, unfreeze_after=args.unfreeze_after)
     trainer.train(epochs=args.epochs)
 

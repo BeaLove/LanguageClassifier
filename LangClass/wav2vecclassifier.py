@@ -1,7 +1,7 @@
-import torch
+
 import torch.nn as nn
 from transformers import Wav2Vec2Model, Wav2Vec2Config, Wav2Vec2CTCTokenizer
-import numpy
+
 
 class LanguageClassifier(nn.Module):
     def __init__(self, out_classes=3, pool_kernel=5):
@@ -29,5 +29,6 @@ class LanguageClassifier(nn.Module):
 
     def unfreeze_pretrained(self, layer):
         '''unfreeze layers in pretrained model'''
+        print("unfreezing pretrained")
         for param in layer.parameters():
             param.requires_grad = True

@@ -158,7 +158,7 @@ class Trainer():
             chkpt_name = 'wav2vec_finetune_checkpoint_epoch{}.pt'.format(epoch)
             torch.save(self.model, os.path.join(self.checkpt_dir, chkpt_name))
             if self.early_stop_callback(val_loss, epoch):
-                print("Validation loss did not improve for {} epochs, stopping training!")
+                print("Validation loss did not improve for {} epochs, stopping training!".format(epoch))
                 break
 
     def early_stop_callback(self, loss, epoch):

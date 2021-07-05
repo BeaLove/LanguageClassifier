@@ -107,6 +107,7 @@ class Trainer():
                                                       global_step=epoch * step)
                 self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                       global_step=epoch * step)
+                batch = 0
             self.optim.zero_grad()
             if self.use_warmup and step <= self.warmup_steps:
                 self.lr_rampup()

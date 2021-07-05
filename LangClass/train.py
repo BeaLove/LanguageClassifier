@@ -123,7 +123,7 @@ class Trainer():
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
 
             metric = {"epoch: ": epoch, "train loss: ": loss.cpu().detach().item(),
-                      "smoothed loss ": running_loss.cpu().detach().item(),
+                      "smoothed loss ": running_loss.item(),
                       "Average train loss: ": self.avg_train_loss}
             dataset.set_postfix(metric)
             sum_loss += loss.cpu().detach().item()

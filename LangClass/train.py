@@ -117,7 +117,7 @@ class Trainer():
             if step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained(self.model.encoder)
-                self.optim.add_param_group({'encoder': self.model.encoder})
+                #self.optim.add_param_group({'encoder': self.model.encoder})
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
             sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum(total_losses)/len(total_losses)

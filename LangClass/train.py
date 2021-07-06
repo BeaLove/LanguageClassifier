@@ -32,8 +32,13 @@ class Trainer():
         if warmup_steps != 0:
             self.use_warmup = True
             self.warmup_steps = warmup_steps
+        else:
+            self.warmup_steps = None
+            self.use_warmup = False
         if decay_steps != 0:
             self.decay_steps = decay_steps
+        else:
+            self.decay_steps = None
         if unfreeze_after == 0:
             '''if unfreeze after is set to 0, will never unfreeze pretrained layer'''
             self.unfreeze = False

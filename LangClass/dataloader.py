@@ -24,6 +24,7 @@ class SentenceData(Dataset):
     def __getitem__(self, item):
         path = self.dataset[item]
         wav, samplerate = torchaudio.load(path, num_frames=16000*self.sample_len)
+        assert samplerate == 16000
         clip_len = samplerate*self.sample_len
         #zero-pad short clips:
         if wav.shape[1] < clip_len:

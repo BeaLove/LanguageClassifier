@@ -188,7 +188,7 @@ class Trainer():
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Train a Language Classifier on Wav2Vec embeddings")
-    parser.add_argument('--dataset_dir', dest='dataset_dir', help='dataset directory', type=str)
+    parser.add_argument('--dataset_dir', dest='dataset_dir', default='data/train', help='dataset directory', type=str)
     parser.add_argument('--checkpoints_dir', dest='ckpt_dir', default='checkpoints', type=str)
     parser.add_argument('--log_dir', dest='log_dir', default='logs', type=str)
     parser.add_argument('--epochs', dest='epochs', default=10, help='training epochs', type=int)

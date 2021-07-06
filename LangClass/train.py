@@ -139,7 +139,7 @@ class Trainer():
                 x, y = sample
                 x = x.to(self.device)
                 y = y.to(self.device)
-                x = x[0, :, :]
+                #x = x[0, :, :]
                 output = self.model.forward(x)
                 loss = self.loss_criterion(output, y)
                 sum_loss += loss.cpu().detach().item()

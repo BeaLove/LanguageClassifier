@@ -97,6 +97,8 @@ class Trainer():
             #if batch == self.batch_size:
                 #batch_losses.mean().backward()
             loss.backward()
+            ##try gradient clipping
+            torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
             self.optim.step()
             metric = {"epoch: ": epoch,
                       "smoothed loss ": loss.cpu().detach().item(),
@@ -120,7 +122,7 @@ class Trainer():
                 self.lr_rampup()
             elif self.use_warmup and step > self.warmup_steps:
                 self.lr_decay()
-            if step*epoch == self.unfreeze_after:
+            if self.model.frozen==True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained(self.model.encoder)
                 #self.optim.add_param_group({'encoder': self.model.encoder})

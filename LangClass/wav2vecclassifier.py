@@ -9,8 +9,10 @@ class LanguageClassifier(nn.Module):
         super().__init__()
         self.encoder = Wav2Vec2Model.from_pretrained('facebook/wav2vec2-large-xlsr-53')
         self.freeze_pretrained(self.encoder)
+        self.frozen = True
         self.avg_pooling = nn.AvgPool2d(kernel_size=pool_kernel)
         self.fc = nn.Linear(9996, out_classes)
+
 
 
     def forward(self, X):
@@ -32,3 +34,4 @@ class LanguageClassifier(nn.Module):
         print("unfreezing pretrained")
         for param in layer.parameters():
             param.requires_grad = True
+        self.frozen = False

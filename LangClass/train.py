@@ -50,8 +50,8 @@ class Trainer():
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])
         self.trainset = Subset(self.dataset, indices=indices[val_split:])
-        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=3, batch_size=1)
-        self.val_loader = DataLoader(self.val_set, shuffle=True, num_workers=3, batch_size=1)
+        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=3, batch_size=32)
+        self.val_loader = DataLoader(self.val_set, shuffle=True, num_workers=3, batch_size=32)
         self.loss_criterion = torch.nn.CrossEntropyLoss()
         self.tensorboard_writer = torch.utils.tensorboard.SummaryWriter(log_dir=log_dir)
         self.global_loss = 1000
@@ -86,7 +86,7 @@ class Trainer():
             x, y = sample
             x = x.to(self.device)
             y = y.to(self.device)
-            x = x[0,:,:]
+            #x = x[0,:,:]
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
             #batch_losses[batch] = loss

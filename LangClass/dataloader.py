@@ -32,6 +32,7 @@ class SentenceData(Dataset):
             wav = torch.cat((wav, pad), axis=1)
         elif wav.shape[1] > clip_len:
             wav = wav[:,:clip_len]
+        assert wav.shape[1] == 80000
         target = self.lang_idx[item]
         return wav, target
 

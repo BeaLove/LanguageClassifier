@@ -89,9 +89,6 @@ class Trainer():
             x = x[0,:,:]
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            if epoch == 3:
-                with open('loss_label.txt', 'a+', encoding='utf-8') as loss_file:
-                    loss_file.write('label: ' + str(y.cpu().detach().item()) + " "+ str(loss.cpu().detach().item()))
             #batch_losses[batch] = loss
             total_losses.append(loss)
             #batch += 1

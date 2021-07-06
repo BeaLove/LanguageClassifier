@@ -12,7 +12,7 @@ class LanguageClassifier(nn.Module):
         self.freeze_pretrained(self.encoder)
         self.frozen = True
         self.avg_pooling = nn.AvgPool2d(kernel_size=pool_kernel)
-        self.fc = nn.Linear(9996, out_classes)
+        self.fc = nn.Linear(7956, out_classes)
 
 
 

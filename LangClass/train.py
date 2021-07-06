@@ -103,10 +103,10 @@ class Trainer():
             self.optim.step()
             metric = {"epoch: ": epoch,
                       "smoothed loss ": loss.cpu().detach().item(),
-                      "Average train loss: ": self.avg_train_loss}
+                      "Average train loss: ": self.avg_train_loss.item()}
             dataset.set_postfix(metric)
             '''log weights and gradients after update'''
-            self.tensorboard_writer.add_scalar(tag='batch smoothed train loss', scalar_value=loss.cpu().detach().item(), global_step=epoch*step)
+            self.tensorboard_writer.add_scalar(tag='train loss', scalar_value=loss.cpu().detach().item(), global_step=epoch*step)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
                                                   global_step=epoch * step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias,

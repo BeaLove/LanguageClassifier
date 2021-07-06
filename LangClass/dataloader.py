@@ -24,20 +24,22 @@ class SentenceData(Dataset):
     def __getitem__(self, item):
         path = self.dataset[item]
         wav, samplerate = torchaudio.load(path)
-        clip_len = samplerate*self.sample_len
+        clip_len = 80000
         #zero-pad short clips:
         if wav.shape[1] < clip_len:
             pad_size = clip_len - wav.shape[1]
             pad = wav[:,:pad_size]
-            wav = torch.cat((wav, pad), axis=1)
-        elif wav.shape[1] > clip_len:
-            wav = wav[:,:clip_len]
-        try:
-            assert wav.shape[1] == 80000
-        except AssertionError:
-            print(path, "sample too short", wav.shape[1])
+            sample = torch.cat((wav, pad), dim=1)
+            if sample.shape[1] < clip_len:
+                pad_size = clip_len - sample.shape[1]
+                pad = wav[:,:pad_size]
+                sample = torch.cat((sample, pad), dim=1)
+        elif wav.shape[1] >= clip_len:
+            sample = wav[:,:clip_len]
+        if sample.shape[1] != 80000:
+            print(path, "sample wrong", wav.shape[1])
         target = self.lang_idx[item]
-        return wav, target
+        return sample, target
 
 if __name__== '__main__':
     """debug code"""

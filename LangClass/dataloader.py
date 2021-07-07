@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset
+from transformers import Wav2Vec2Processor
 import torchaudio
 import os
 
@@ -9,6 +10,7 @@ class SentenceData(Dataset):
         self.sample_len = sample_len
         self.lang_code = []
         self.dataset = []
+        #self.processor = Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-large-xlsr-53')
         for root, dirs, files in os.walk(self.data_dir, topdown=True):
             for file in files:
                 self.dataset.append(os.path.join(root, file))

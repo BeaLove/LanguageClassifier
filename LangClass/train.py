@@ -122,7 +122,7 @@ class Trainer():
                 self.lr_rampup()
             elif self.use_warmup and step > self.warmup_steps:
                 self.lr_decay()
-            if step*epoch == self.unfreeze_after:
+            if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained(self.model.encoder)
                 #self.optim.add_param_group({'encoder': self.model.encoder})
@@ -193,13 +193,13 @@ def parse_args(argv=None):
     parser.add_argument('--epochs', dest='epochs', default=10, help='training epochs', type=int)
     parser.add_argument('--patience', dest='patience', help='early stop patience', default=5, type=int)
     parser.add_argument('--train_from', dest='train_from', default=None, help='resume training from checkpoint', type=str)
-    parser.add_argument('--learning_rate', dest='lr', default=1e-4, type=float, help='learning rate, default 1e-4, if warmup is enabled this is the starting lr')
+    parser.add_argument('--learning_rate', dest='lr', default=1e-5, type=float, help='learning rate, default 1e-4, if warmup is enabled this is the starting lr')
     parser.add_argument('--optimizer', dest='optim', default='adam', type=str, help='which optimizer to use, default is Adam')
-    parser.add_argument('--warmup', dest='warmup', default=2500, type=int, help='number of warmup steps for optimizer, default 2500, set to 0 to disable warmup')
+    parser.add_argument('--warmup', dest='warmup', default=150, type=int, help='number of warmup steps for optimizer, default 2500, set to 0 to disable warmup')
     parser.add_argument('--max_lr', dest='max_lr', default=5e-3, type=float, help='maximum learning rate attained after steps = warmup steps')
-    parser.add_argument('--decay_steps', dest='decay', default=24255, type=int, help='number of steps to decay learning rate' )
-    parser.add_argument('--unfreeze_after', dest='unfreeze_after', default=5000, type=int, help="unfreeze pretrained layers after this number of steps, defalt = warmup steps")
-    parser.add_argument('--batch_size', dest='batch_size', default=32, type=int, help='batch size')
+    parser.add_argument('--decay_steps', dest='decay', default=2000, type=int, help='number of steps to decay learning rate' )
+    parser.add_argument('--unfreeze_after', dest='unfreeze_after', default=150, type=int, help="unfreeze pretrained layers after this number of steps, defalt = warmup steps")
+    parser.add_argument('--batch_size', dest='batch_size', default=16, type=int, help='batch size')
     args = parser.parse_args()
     print(args)
     return args

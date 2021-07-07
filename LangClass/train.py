@@ -20,6 +20,7 @@ class Trainer():
         if checkpoint is not None:
             print("training from: ", checkpoint)
             self.model = torch.load(checkpoint)
+            self.model.unfreeze_pretrained()
         else:
             self.model = LanguageClassifier()
         if optim == 'sgd':
@@ -39,10 +40,7 @@ class Trainer():
             self.decay_steps = decay_steps
         else:
             self.decay_steps = None
-        if unfreeze_after == 0:
-            '''if unfreeze after is set to 0, will never unfreeze pretrained layer'''
-            self.unfreeze = False
-        else:
+        if unfreeze_after != 0:
             '''setting a custom step at which to unfreeze pretrained'''
             self.unfreeze_after = unfreeze_after
         self.dataset = SentenceData(data_dir, sample_len=4) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)

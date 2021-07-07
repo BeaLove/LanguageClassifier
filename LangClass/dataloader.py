@@ -5,7 +5,7 @@ import torchaudio
 import os
 
 class SentenceData(Dataset):
-    def __init__(self, dataset_dir, sample_len=5):
+    def __init__(self, dataset_dir, sample_len=4):
         self.data_dir = dataset_dir
         self.sample_len = sample_len
         self.lang_code = []

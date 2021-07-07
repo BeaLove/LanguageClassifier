@@ -16,7 +16,7 @@ def test(checkpoint, data_dir):
         print("using cpu")
 
     test_set = SentenceData(data_dir)
-    test_data = torch.utils.data.DataLoader(test_set, num_workers=3, batch_size=1)
+    test_data = torch.utils.data.DataLoader(test_set, num_workers=3, batch_size=16)
     if not cuda:
         model = torch.load(checkpoint, map_location=torch.device("cpu"))
     else:
@@ -29,11 +29,11 @@ def test(checkpoint, data_dir):
         x, y = sample
         x = x.to(device)
         y = y.to(device)
-        x = x[0,:,:]
         output = model.forward(x)
         prediction = torch.argmax(output, dim=1)
+        compare = [1 if prediction[i] == y[i] else 0 for i in range(len(prediction))]
         if prediction == y:
-            correct += 1
+            correct += sum(compare)
         accuracy = correct/total
     return accuracy
 

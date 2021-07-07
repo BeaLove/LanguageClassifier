@@ -20,7 +20,7 @@ class LanguageClassifier(nn.Module):
     def forward(self, X):
         wav2vecout = self.encoder(X)
         context = wav2vecout.logits
-        pooled = torch.mean(context, dim=1, keepdim=True)
+        pooled = torch.mean(context, dim=1)
         #vector = pooled.reshape(pooled.shape[0],pooled.shape[1]*pooled.shape[2])
         linear = self.fc(pooled)
         return linear

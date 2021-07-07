@@ -117,9 +117,9 @@ class Trainer():
             #batch_losses = torch.zeros(self.batch_size)
 
             self.optim.zero_grad()
-            if self.use_warmup and step <= self.warmup_steps:
+            if self.use_warmup and step*epoch <= self.warmup_steps:
                 self.lr_rampup()
-            elif self.use_warmup and step > self.warmup_steps:
+            elif self.use_warmup and step*epoch > self.warmup_steps:
                 self.lr_decay()
             if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''

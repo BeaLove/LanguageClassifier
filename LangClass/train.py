@@ -69,32 +69,22 @@ class Trainer():
             self.device = 'cpu'
             print('using cpu!')
         self.model = self.model.to(self.device)
-        #print(self.model)
         print("dataset size: training {}, validation {}".format(len(self.trainset), len(self.val_set)))
 
     def train_epoch(self, epoch):
-        '''runs one epoch of training (one full run through the training data'''
+        '''runs one epoch of training (one full run through the training data)'''
         dataset = tqdm(self.train_loader)
         dataset.set_description(desc="Training")
         sum_loss = 0
-        batch = 0
-        #batch_losses = torch.zeros(self.batch_size)
         total_losses = []
 
         for step, sample in enumerate(dataset):
             x, y = sample
             x = x.to(self.device)
             y = y.to(self.device)
-            #x = x[0,:,:]
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            #batch_losses[batch] = loss
             total_losses.append(loss)
-            #batch += 1
-            #'''average loss over batch size training samples and perform backprop,
-            #    this is needed because pre-trained wav2vec will only take one sample at a time, not batches'''
-            #if batch == self.batch_size:
-                #batch_losses.mean().backward()
             loss.backward()
             ##try gradient clipping
             torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
@@ -128,6 +118,7 @@ class Trainer():
         self.avg_train_loss = sum(total_losses)/len(total_losses)
 
     def validate(self, epoch):
+        '''validates the model'''
         batch_i = tqdm(self.val_loader)
         batch_i.set_description(desc="validating")
         sum_loss = 0
@@ -158,6 +149,7 @@ class Trainer():
             group['lr'] = self.lr
 
     def train(self, epochs):
+        '''runs the full training for given number of epochs, 1.train, 2. validate, 3.check early stopping metric, repeat'''
         for epoch in range(1, epochs):
             self.train_epoch(epoch)
             val_loss = self.validate(epoch)

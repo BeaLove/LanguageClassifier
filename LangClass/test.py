@@ -1,7 +1,7 @@
 import argparse
 
 import torch
-from dataloader import SentenceData
+from dataloader import Commonvoice, VoxLingua
 from tqdm import tqdm
 
 
@@ -15,8 +15,8 @@ def test(checkpoint, data_dir):
         device = 'cpu'
         print("using cpu")
 
-    test_set = SentenceData(data_dir, sample_len=4)
-    test_data = torch.utils.data.DataLoader(test_set, num_workers=5, batch_size=16)
+    test_set = Commonvoice(data_dir, sample_len=4)
+    test_data = torch.utils.data.DataLoader(test_set, num_workers=3, batch_size=8)
     if not cuda:
         model = torch.load(checkpoint, map_location=torch.device("cpu"))
     else:

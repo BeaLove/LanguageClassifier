@@ -1,7 +1,7 @@
 import torch.nn
 import argparse
 from wav2vecclassifier import LanguageClassifier
-from dataloader import SentenceData
+from dataloader import Commonvoice, VoxLingua
 from torch.utils.data import DataLoader, Subset
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -13,7 +13,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class Trainer():
     def __init__(self, data_dir, log_dir, batch_size, patience, checkpoints_dir, checkpoint,
-                 lr, max_lr, optim, warmup_steps, decay_steps, unfreeze_after):
+                 lr, max_lr, min_lr, optim, warmup_steps, decay_steps, unfreeze_after):
         '''initialize training with options:
             -start training from checkpoint or from scratch
             -define path to data, tensorboard log directory, checkpoints directory, learning rate'''
@@ -30,6 +30,7 @@ class Trainer():
         print("optimizer: ", self.optim)
         self.lr = lr
         self.max_lr = max_lr
+        self.min_lr = min_lr
         if warmup_steps != 0:
             self.use_warmup = True
             self.warmup_steps = warmup_steps
@@ -43,7 +44,7 @@ class Trainer():
         if unfreeze_after != 0:
             '''setting a custom step at which to unfreeze pretrained'''
             self.unfreeze_after = unfreeze_after
-        self.dataset = SentenceData(data_dir, sample_len=4) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)
+        self.dataset = Commonvoice(data_dir, sample_len=4) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)
         indices = torch.randperm(len(self.dataset))
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])
@@ -122,7 +123,7 @@ class Trainer():
                 self.lr_decay()
             if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
-                self.model.unfreeze_pretrained(self.model.encoder)
+                self.model.unfreeze_pretrained()
                 #self.optim.add_param_group({'encoder': self.model.encoder})
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
             sum_loss += loss.cpu().detach().item()
@@ -163,14 +164,14 @@ class Trainer():
         for epoch in range(1, epochs):
             self.train_epoch(epoch)
             val_loss = self.validate(epoch)
-            chkpt_name = 'wav2vec_finetune_checkpoint_epoch{}.pt'.format(epoch)
+            chkpt_name = 'wav2vec_finetune_epoch{}.pt'.format(epoch)
             torch.save(self.model, os.path.join(self.checkpt_dir, chkpt_name))
             if self.early_stop_callback(val_loss, epoch):
-                print("Validation loss did not improve for {} epochs, stopping training!".format(epoch))
+                print("Validation loss did not improve for {} epochs, stopping training!".format(self.patience))
+                print("best model recorded at epoch {}, loss {}".format(self.best_model, self.global_loss))
                 break
 
     def early_stop_callback(self, loss, epoch):
-        print("in early stop callback: loss: {} best loss: {}".format(loss, self.global_loss))
         if loss > self.global_loss:
             self.patience -= 1
             print("val loss did not improve, decreasing patience to: {}".format(self.patience))
@@ -178,7 +179,7 @@ class Trainer():
             self.best_model = epoch
             self.global_loss = loss
             self.patience = self.max_patience
-            print("val loss improved!")
+            print("val loss improved! best loss {} recorded at {}".format(self.global_loss, self.best_model))
         if self.patience == 0:
             return True
         return False
@@ -188,13 +189,14 @@ def parse_args(argv=None):
     parser.add_argument('--dataset_dir', dest='dataset_dir', default='data/train', help='dataset directory', type=str)
     parser.add_argument('--checkpoints_dir', dest='ckpt_dir', default='checkpoints', type=str)
     parser.add_argument('--log_dir', dest='log_dir', default='logs', type=str)
-    parser.add_argument('--epochs', dest='epochs', default=10, help='training epochs', type=int)
+    parser.add_argument('--epochs', dest='epochs', default=50, help='training epochs', type=int)
     parser.add_argument('--patience', dest='patience', help='early stop patience', default=5, type=int)
     parser.add_argument('--train_from', dest='train_from', default=None, help='resume training from checkpoint', type=str)
-    parser.add_argument('--learning_rate', dest='lr', default=1e-5, type=float, help='learning rate, default 1e-4, if warmup is enabled this is the starting lr')
+    parser.add_argument('--learning_rate', dest='lr', default=1e-5, type=float, help='learning rate, default 1e-5, if warmup is enabled this is the starting lr')
     parser.add_argument('--optimizer', dest='optim', default='adam', type=str, help='which optimizer to use, default is Adam')
     parser.add_argument('--warmup', dest='warmup', default=150, type=int, help='number of warmup steps for optimizer, default 2500, set to 0 to disable warmup')
     parser.add_argument('--max_lr', dest='max_lr', default=5e-3, type=float, help='maximum learning rate attained after steps = warmup steps')
+    parser.add_argument('--min_lr', dest='min_lr', default=1e-6, type=float, help='minimum learning rate from decay')
     parser.add_argument('--decay_steps', dest='decay', default=2000, type=int, help='number of steps to decay learning rate' )
     parser.add_argument('--unfreeze_after', dest='unfreeze_after', default=150, type=int, help="unfreeze pretrained layers after this number of steps, defalt = warmup steps")
     parser.add_argument('--batch_size', dest='batch_size', default=16, type=int, help='batch size')

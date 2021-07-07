@@ -12,14 +12,14 @@ class LanguageClassifier(nn.Module):
         self.encoder = Wav2Vec2ForCTC.from_pretrained('facebook/wav2vec2-large-xlsr-53')
         self.freeze_pretrained()
         self.frozen = True
-        self.fc = nn.Linear(199, out_classes)
+        self.fc = nn.Linear(32, out_classes)
 
 
 
     def forward(self, X):
         wav2vecout = self.encoder(X)
         context = wav2vecout.logits
-        pooled = torch.mean(context, dim=2)
+        pooled = torch.mean(context, dim=1)
         #vector = pooled.reshape(pooled.shape[0],pooled.shape[1]*pooled.shape[2])
         linear = self.fc(pooled)
         return linear

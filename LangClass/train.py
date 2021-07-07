@@ -100,8 +100,8 @@ class Trainer():
             torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
             self.optim.step()
             metric = {"epoch: ": epoch,
-                      "smoothed loss ": loss.cpu().detach().item(),
-                      "Average train loss: ": self.avg_train_loss}
+                      "training loss ": loss.cpu().detach().item(),
+                      "Average train loss from last epoch: ": self.avg_train_loss}
             dataset.set_postfix(metric)
             '''log weights and gradients after update'''
             self.tensorboard_writer.add_scalar(tag='train loss', scalar_value=loss.cpu().detach().item(), global_step=epoch*step)
@@ -113,8 +113,7 @@ class Trainer():
                                                   global_step=epoch * step)
             self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                   global_step=epoch * step)
-            #batch = 0
-            #batch_losses = torch.zeros(self.batch_size)
+
 
             self.optim.zero_grad()
             if self.use_warmup and step*epoch <= self.warmup_steps:
@@ -124,7 +123,6 @@ class Trainer():
             if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained()
-                #self.optim.add_param_group({'encoder': self.model.encoder})
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
             sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum(total_losses)/len(total_losses)
@@ -138,11 +136,10 @@ class Trainer():
                 x, y = sample
                 x = x.to(self.device)
                 y = y.to(self.device)
-                #x = x[0, :, :]
                 output = self.model.forward(x)
                 loss = self.loss_criterion(output, y)
                 sum_loss += loss.cpu().detach().item()
-                metric = {"step-wise validation loss: ": loss.cpu().detach().item(), "avg val loss": self.avg_val_loss}
+                metric = {"validation loss: ": loss.cpu().detach().item(), "avg val loss from last epoch": self.avg_val_loss}
                 batch_i.set_postfix(metric)
             self.avg_val_loss = sum_loss/len(self.val_set)
         self.tensorboard_writer.add_scalar(tag="val loss", scalar_value=self.avg_val_loss, global_step=epoch)
@@ -167,7 +164,7 @@ class Trainer():
             chkpt_name = 'wav2vec_finetune_epoch{}.pt'.format(epoch)
             torch.save(self.model, os.path.join(self.checkpt_dir, chkpt_name))
             if self.early_stop_callback(val_loss, epoch):
-                print("Validation loss did not improve for {} epochs, stopping training!".format(self.patience))
+                print("Validation loss did not improve for {} epochs, stopping training!".format(self.max_patience))
                 print("best model recorded at epoch {}, loss {}".format(self.best_model, self.global_loss))
                 break
 

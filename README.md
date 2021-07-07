@@ -1,4 +1,4 @@
-# LanguageClassifier
+# Language Classifier
 Model to classify the language of a speaker given a wav file. 
 This is an adaptation of the paper Exploring Wav2vec2.0 on Speaker Identification and Language Verification (Zhiyun Fan et al in Computing Research Repository, CoRR, 2020).
 I fine-tune the multi-lingual Wav2Vec2.0 model (XLSR Large) on a Language Identification task. Initially I only classify English, Swedish and Arabic but this is extendable). XLSR Large was trained on 53 languages from the LibriSpeech, Commonvoice and Babel datasets and is available at Huggingface Transformers.

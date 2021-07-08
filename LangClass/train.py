@@ -33,7 +33,7 @@ class Trainer():
         self.max_lr = max_lr
         self.min_lr = min_lr
         '''try LR schedule'''
-        self.scheduler = ReduceLROnPlateau(mode='min', factor=0.5, patience=7, verbose=True)
+        self.scheduler = ReduceLROnPlateau(optimizer=self.optim, mode='min', factor=0.5, patience=7, verbose=True)
         if warmup_steps != 0:
             self.use_warmup = True
             self.warmup_steps = warmup_steps

@@ -84,7 +84,7 @@ class Trainer():
             y = y.to(self.device)
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-            total_losses.append(loss)
+            #total_losses.append(loss)
             loss.backward()
             ##try gradient clipping
             torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
@@ -115,7 +115,7 @@ class Trainer():
                 self.model.unfreeze_pretrained()
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
             sum_loss += loss.cpu().detach().item()
-        self.avg_train_loss = sum(total_losses)/len(total_losses)
+        self.avg_train_loss = sum_loss/step
 
     def validate(self, epoch):
         '''validates the model'''

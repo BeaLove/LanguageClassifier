@@ -113,7 +113,7 @@ class Trainer():
                 self.lr_decay()
             if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
-                self.model.unfreeze_pretrained()
+                self.model.unfreeze_pretrained(self.model.encoder)
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
             sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum_loss/step

@@ -1,7 +1,7 @@
 import torch.nn
 import argparse
 from wav2vecclassifier import LanguageClassifier
-from dataloader import Commonvoice, VoxLingua
+from dataloader import SentenceData
 from torch.utils.data import DataLoader, Subset
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -46,7 +46,7 @@ class Trainer():
         else:
             '''setting a custom step at which to unfreeze pretrained'''
             self.unfreeze_after = unfreeze_after
-        self.dataset = Commonvoice(data_dir, sample_len=4) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)
+        self.dataset = SentenceData(data_dir, sample_len=4) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)
         indices = torch.randperm(len(self.dataset))
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])

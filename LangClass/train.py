@@ -145,7 +145,7 @@ class Trainer():
 
     def lr_decay(self):
         '''decays learning rate linearly'''
-        self.lr = self.lr - (self.max_lr-self.min_lr)*(1/self.decay_steps)
+        self.lr = self.lr - self.max_lr*(1/self.decay_steps)
         for group in self.optim.param_groups:
             group['lr'] = self.lr
 

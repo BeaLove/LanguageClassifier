@@ -3,6 +3,7 @@ import argparse
 from wav2vecclassifier import LanguageClassifier
 from dataloader import Commonvoice, VoxLingua
 from torch.utils.data import DataLoader, Subset
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -31,6 +32,8 @@ class Trainer():
         self.lr = lr
         self.max_lr = max_lr
         self.min_lr = min_lr
+        '''try LR schedule'''
+        self.scheduler = ReduceLROnPlateau(mode='min', factor=0.5, patience=7, verbose=True)
         if warmup_steps != 0:
             self.use_warmup = True
             self.warmup_steps = warmup_steps
@@ -91,7 +94,7 @@ class Trainer():
             self.optim.step()
             metric = {"epoch: ": epoch,
                       "training loss ": loss.cpu().detach().item(),
-                      "Average train loss from last epoch: ": self.avg_train_loss}
+                      "Average train loss from last epoch: ": self.avg_train_loss.item()}
             dataset.set_postfix(metric)
             '''log weights and gradients after update'''
             self.tensorboard_writer.add_scalar(tag='train loss', scalar_value=loss.cpu().detach().item(), global_step=epoch*step)
@@ -113,7 +116,8 @@ class Trainer():
             if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained()
-            self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
+            '''log lr'''
+            self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.scheduler.state_dict()['lr'], global_step=epoch*step)
             sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum(total_losses)/len(total_losses)
 
@@ -153,6 +157,7 @@ class Trainer():
         for epoch in range(1, epochs):
             self.train_epoch(epoch)
             val_loss = self.validate(epoch)
+            self.scheduler.step(metrics=val_loss)
             chkpt_name = 'wav2vec_finetune_epoch{}.pt'.format(epoch)
             torch.save(self.model, os.path.join(self.checkpt_dir, chkpt_name))
             if self.early_stop_callback(val_loss, epoch):

@@ -1,6 +1,5 @@
 import torch
 from torch.utils.data import Dataset
-from transformers import Wav2Vec2Processor
 import torchaudio
 import os
 
@@ -10,7 +9,6 @@ class Commonvoice(Dataset):
         self.sample_len = sample_len
         self.lang_code = []
         self.dataset = []
-        #self.processor = Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-large-xlsr-53')
         for root, dirs, files in os.walk(self.data_dir, topdown=True):
             for file in files:
                 self.dataset.append(os.path.join(root, file))
@@ -18,7 +16,6 @@ class Commonvoice(Dataset):
                 self.lang_code.append(lang)
         self.code_to_idx = {"en": 0, "ar": 1, "sv": 2}
         self.lang_idx = [self.code_to_idx[lang] for lang in self.lang_code]
-        ##test: delete after debug
 
     def __len__(self):
         return len(self.dataset)

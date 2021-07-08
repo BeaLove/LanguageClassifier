@@ -1,7 +1,7 @@
 import argparse
 
 import torch
-from dataloader import Commonvoice, VoxLingua
+from dataloader import SentenceData
 from tqdm import tqdm
 
 
@@ -15,8 +15,8 @@ def test(checkpoint, data_dir):
         device = 'cpu'
         print("using cpu")
 
-    test_set = Commonvoice(data_dir, sample_len=4)
-    test_data = torch.utils.data.DataLoader(test_set, num_workers=3, batch_size=8)
+    test_set = SentenceData(data_dir)
+    test_data = torch.utils.data.DataLoader(test_set, num_workers=3, batch_size=16)
     if not cuda:
         model = torch.load(checkpoint, map_location=torch.device("cpu"))
     else:
@@ -32,8 +32,8 @@ def test(checkpoint, data_dir):
         output = model.forward(x)
         prediction = torch.argmax(output, dim=1)
         compare = [1 if prediction[i] == y[i] else 0 for i in range(len(prediction))]
-
-        correct += sum(compare)
+        if prediction == y:
+            correct += sum(compare)
         accuracy = correct/total
     return accuracy
 
@@ -42,7 +42,7 @@ def parse_args(argv=None):
     del argv
     parser = argparse.ArgumentParser(description="test the language classifier")
     parser.add_argument('--model_checkpoint', dest='checkpoint', type=str, help="full path to checkpoint file including directory")
-    parser.add_argument('--test_data_dir', dest='data_dir', default='data/common_voice_test', type=str, help='directory of test data')
+    parser.add_argument('--test_data_dir', dest='data_dir', type=str, help='directory of test data')
     args = parser.parse_args()
     return args
 

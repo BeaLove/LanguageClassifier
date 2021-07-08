@@ -94,7 +94,7 @@ class Trainer():
             self.optim.step()
             metric = {"epoch: ": epoch,
                       "training loss ": loss.cpu().detach().item(),
-                      "Average train loss from last epoch: ": self.avg_train_loss.item()}
+                      "Average train loss from last epoch: ": self.avg_train_loss}
             dataset.set_postfix(metric)
             '''log weights and gradients after update'''
             self.tensorboard_writer.add_scalar(tag='train loss', scalar_value=loss.cpu().detach().item(), global_step=epoch*step)

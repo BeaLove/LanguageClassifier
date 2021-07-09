@@ -51,8 +51,8 @@ class Trainer():
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])
         self.trainset = Subset(self.dataset, indices=indices[val_split:])
-        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=4, batch_size=batch_size)
-        self.val_loader = DataLoader(self.val_set, shuffle=True, num_workers=4, batch_size=batch_size)
+        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=2, batch_size=batch_size)
+        self.val_loader = DataLoader(self.val_set, shuffle=True, num_workers=2, batch_size=batch_size)
         self.loss_criterion = torch.nn.CrossEntropyLoss()
         self.tensorboard_writer = torch.utils.tensorboard.SummaryWriter(log_dir=log_dir)
         self.global_loss = 1000
@@ -88,7 +88,7 @@ class Trainer():
 
             loss.backward()
             ##try gradient clipping
-            torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
+            #torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
             self.optim.step()
             metric = {"epoch: ": epoch,
                       "training loss ": loss.cpu().detach().item(),
@@ -112,7 +112,7 @@ class Trainer():
                 self.lr_decay()
             if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
-                self.model.unfreeze_pretrained(self.model.encoder)
+                self.model.unfreeze_pretrained()
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
             sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum_loss/step
@@ -120,7 +120,7 @@ class Trainer():
     def validate(self, epoch):
         '''validates the model'''
         batch_i = tqdm(self.val_loader)
-        batch_i.set_description(desc="validating")set
+        batch_i.set_description(desc="validating")
         sum_loss = 0
         with torch.no_grad():
             for step, sample in enumerate(batch_i):

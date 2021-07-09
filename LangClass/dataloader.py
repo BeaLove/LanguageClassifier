@@ -27,10 +27,8 @@ class Commonvoice(Dataset):
         path = self.dataset[item]
         wav, samplerate = torchaudio.load(path)
         clip_len = samplerate*self.sample_len
-        target = self.lang_idx[item]
-        return wav[0], target
         #zero-pad short clips:
-    '''
+
         if wav.shape[1] < clip_len:
             pad_size = clip_len - wav.shape[1]
             pad = wav[:,:pad_size]
@@ -87,12 +85,15 @@ class Voxlingua(Dataset):
             print(path, "sample wrong", wav.shape[1])
         target = self.lang_idx[item]
         #out = sample[0]
-        return sample[0], target
+        return sample, target
 
 class PadSequence():
     def __call__(self, batch):
-        samples, labels = batch
-        unpacked, lengths_packed = torch.nn.utils.rnn.pad_packed_sequence(samples, batch_first=True)
+        sorted_batch = sorted(batch, key=lambda x: x[0].shape[1], reverse=True)
+        samples = [sample[0] for sample in sorted_batch]
+        labels = [sample[1] for sample in sorted_batch]
+
+        unpacked = torch.nn.utils.rnn.pad_sequence(samples, batch_first=True)
         return unpacked, labels
 
 if __name__== '__main__':

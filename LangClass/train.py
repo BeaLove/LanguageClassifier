@@ -126,8 +126,8 @@ class Trainer():
         with torch.no_grad():
             for step, sample in enumerate(batch_i):
                 x, y = sample
-                unpacked, lens_unpacked = torch.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
-                x = unpacked.to(self.device)
+                #unpacked, lens_unpacked = torch.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
+                x = x.to(self.device)
                 y = y.to(self.device)
                 output = self.model.forward(x)
                 loss = self.loss_criterion(output, y)
@@ -143,12 +143,14 @@ class Trainer():
         self.lr = self.lr + self.max_lr *(1/self.warmup_steps)
         for group in self.optim.param_groups:
             group['lr'] = self.lr
+            print(group['lr'])
 
     def lr_decay(self):
         '''decays learning rate linearly'''
         self.lr = self.lr - self.max_lr*(1/self.decay_steps)
         for group in self.optim.param_groups:
             group['lr'] = self.lr
+            print(group['lr'])
 
     def train(self, epochs):
         '''runs the full training for given number of epochs, 1.train, 2. validate, 3.check early stopping metric, repeat'''

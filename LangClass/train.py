@@ -143,7 +143,6 @@ class Trainer():
         self.lr = self.lr + self.max_lr *(1/self.warmup_steps)
         for group in self.optim.param_groups:
             group['lr'] = self.lr
-            print(group['lr'])
 
     def lr_decay(self):
         '''decays learning rate linearly'''

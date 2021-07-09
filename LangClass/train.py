@@ -149,7 +149,6 @@ class Trainer():
         self.lr = self.lr - self.max_lr*(1/self.decay_steps)
         for group in self.optim.param_groups:
             group['lr'] = self.lr
-            print(group['lr'])
 
     def train(self, epochs):
         '''runs the full training for given number of epochs, 1.train, 2. validate, 3.check early stopping metric, repeat'''

@@ -79,7 +79,7 @@ class Trainer():
         dataset = tqdm(self.train_loader)
         dataset.set_description(desc="Training")
         sum_loss = 0
-
+        total_losses = []
         for step, sample in enumerate(dataset):
             self.global_step +=1
             x, y = sample
@@ -88,7 +88,6 @@ class Trainer():
             y = y.to(self.device)
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
-
             loss.backward()
             ##try gradient clipping
             torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
@@ -117,7 +116,7 @@ class Trainer():
                 self.model.unfreeze_pretrained()
             self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=self.global_step)
             sum_loss += loss.cpu().detach().item()
-        self.avg_train_loss = sum_loss/step
+        self.avg_train_loss = sum(total_losses)/len(total_losses)
 
     def validate(self, epoch):
         '''validates the model'''

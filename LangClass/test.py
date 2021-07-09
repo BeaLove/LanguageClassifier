@@ -16,7 +16,7 @@ def test(checkpoint, data_dir):
         print("using cpu")
 
     test_set = SentenceData(data_dir)
-    test_data = torch.utils.data.DataLoader(test_set, num_workers=3, batch_size=16)
+    test_data = torch.utils.data.DataLoader(test_set, num_workers=2, batch_size=32)
     if not cuda:
         model = torch.load(checkpoint, map_location=torch.device("cpu"))
     else:

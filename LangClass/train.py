@@ -1,7 +1,7 @@
 import torch.nn
 import argparse
 from wav2vecclassifier import LanguageClassifier
-from dataloader import Commonvoice, Voxlingua
+from dataloader import Commonvoice, Voxlingua, PadSequence
 from torch.utils.data import DataLoader, Subset
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -51,7 +51,7 @@ class Trainer():
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])
         self.trainset = Subset(self.dataset, indices=indices[val_split:])
-        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=4, batch_size=batch_size)
+        self.train_loader = DataLoader(self.trainset, shuffle=True, num_workers=4, batch_size=batch_size, collate_fn=PadSequence())
         self.val_loader = DataLoader(self.val_set, shuffle=True, num_workers=4, batch_size=batch_size)
         self.loss_criterion = torch.nn.CrossEntropyLoss()
         self.tensorboard_writer = torch.utils.tensorboard.SummaryWriter(log_dir=log_dir)
@@ -142,12 +142,14 @@ class Trainer():
         self.lr = self.lr + self.max_lr *(1/self.warmup_steps)
         for group in self.optim.param_groups:
             group['lr'] = self.lr
+            print(group['lr'])
 
     def lr_decay(self):
         '''decays learning rate linearly'''
         self.lr = self.lr - self.max_lr*(1/self.decay_steps)
         for group in self.optim.param_groups:
             group['lr'] = self.lr
+            print(group['lr'])
 
     def train(self, epochs):
         '''runs the full training for given number of epochs, 1.train, 2. validate, 3.check early stopping metric, repeat'''

@@ -73,7 +73,6 @@ class Trainer():
             print('using cpu!')
         self.model = self.model.to(self.device)
         print("dataset size: training {}, validation {}".format(len(self.trainset), len(self.val_set)))
-        print(self.model)
 
     def train_epoch(self, epoch):
         '''runs one epoch of training (one full run through the training data)'''

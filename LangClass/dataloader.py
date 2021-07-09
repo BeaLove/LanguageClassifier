@@ -41,7 +41,8 @@ class SentenceData(Dataset):
         if sample.shape[1] != clip_len:
             print(path, "sample wrong", wav.shape[1])
         target = self.lang_idx[item]
-        return sample, target
+        #out = sample[0]
+        return sample[0], target
 
 if __name__== '__main__':
     """debug code"""

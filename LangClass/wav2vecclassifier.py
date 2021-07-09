@@ -12,7 +12,7 @@ class LanguageClassifier(nn.Module):
         self.encoder = Wav2Vec2ForCTC.from_pretrained('facebook/wav2vec2-large-xlsr-53')
         self.freeze_pretrained(self.encoder)
         self.frozen = True
-        self.avg_pooling = nn.AvgPool2d(kernel_size=pool_kernel)
+        #self.avg_pooling = nn.AvgPool2d(kernel_size=pool_kernel)
         self.fc = nn.Linear(32, out_classes)
 
 

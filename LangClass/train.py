@@ -105,7 +105,6 @@ class Trainer():
             self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                   global_step=epoch * step)
 
-
             self.optim.zero_grad()
             if self.use_warmup and step*epoch <= self.warmup_steps:
                 self.lr_rampup()
@@ -164,7 +163,7 @@ class Trainer():
     def early_stop_callback(self, loss, epoch):
         if loss > self.global_loss:
             self.patience -= 1
-            print("val loss did not improve, decreasing patience to: {}".format(self.patience))
+            print("val loss: {} did not improve, decreasing patience to: {}".format(loss, self.patience))
         else:
             self.best_model = epoch
             self.global_loss = loss

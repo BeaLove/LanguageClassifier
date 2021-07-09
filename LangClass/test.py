@@ -32,8 +32,7 @@ def test(checkpoint, data_dir):
         output = model.forward(x)
         prediction = torch.argmax(output, dim=1)
         compare = [1 if prediction[i] == y[i] else 0 for i in range(len(prediction))]
-        if prediction == y:
-            correct += sum(compare)
+        correct += sum(compare)
         accuracy = correct/total
     return accuracy
 

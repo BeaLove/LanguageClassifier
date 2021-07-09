@@ -88,7 +88,7 @@ class Trainer():
 
             loss.backward()
             ##try gradient clipping
-            #torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
+            torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
             self.optim.step()
             metric = {"epoch: ": epoch,
                       "training loss ": loss.cpu().detach().item(),

@@ -41,8 +41,10 @@ class Commonvoice(Dataset):
         if sample.shape[1] != clip_len:
             print(path, "sample wrong", wav.shape[1])
         target = self.lang_idx[item]
-        #out = sample[0]
-        return sample[0], target
+        return sample, target
+        #out = sample[0] '''
+
+
 
 class Voxlingua(Dataset):
     def __init__(self, dataset_dir, sample_len=4):

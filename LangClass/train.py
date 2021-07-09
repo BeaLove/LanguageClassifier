@@ -1,7 +1,7 @@
 import torch.nn
 import argparse
 from wav2vecclassifier import LanguageClassifier
-from dataloader import SentenceData
+from dataloader import Commonvoice, Voxlingua
 from torch.utils.data import DataLoader, Subset
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -46,7 +46,7 @@ class Trainer():
         else:
             '''setting a custom step at which to unfreeze pretrained'''
             self.unfreeze_after = unfreeze_after
-        self.dataset = SentenceData(data_dir, sample_len=4) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)
+        self.dataset = Commonvoice(data_dir, sample_len=4) #instatiates dataset and split into training and validation sets (hardcoded 5% val data)
         indices = torch.randperm(len(self.dataset))
         val_split = int((len(indices)*0.05))
         self.val_set = Subset(self.dataset, indices=indices[:val_split])
@@ -120,11 +120,12 @@ class Trainer():
     def validate(self, epoch):
         '''validates the model'''
         batch_i = tqdm(self.val_loader)
-        batch_i.set_description(desc="validating")
+        batch_i.set_description(desc="validating")set
         sum_loss = 0
         with torch.no_grad():
             for step, sample in enumerate(batch_i):
                 x, y = sample
+                #unpacked, lens_unpacked = torch.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
                 x = x.to(self.device)
                 y = y.to(self.device)
                 output = self.model.forward(x)

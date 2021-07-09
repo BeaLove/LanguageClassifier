@@ -56,6 +56,7 @@ class Trainer():
         self.loss_criterion = torch.nn.CrossEntropyLoss()
         self.tensorboard_writer = torch.utils.tensorboard.SummaryWriter(log_dir=log_dir)
         self.global_loss = 1000
+        self.global_step = 0
         self.patience = patience
         self.max_patience = patience
         os.makedirs(checkpoints_dir, exist_ok=True)
@@ -72,6 +73,7 @@ class Trainer():
             print('using cpu!')
         self.model = self.model.to(self.device)
         print("dataset size: training {}, validation {}".format(len(self.trainset), len(self.val_set)))
+        print(self.model)
 
     def train_epoch(self, epoch):
         '''runs one epoch of training (one full run through the training data)'''
@@ -80,6 +82,7 @@ class Trainer():
         sum_loss = 0
 
         for step, sample in enumerate(dataset):
+            self.global_step +=1
             x, y = sample
             #unpacked, lens_unpacked = torch.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
             x = x.to(self.device)
@@ -96,25 +99,26 @@ class Trainer():
                       "Average train loss from last epoch: ": self.avg_train_loss}
             dataset.set_postfix(metric)
             '''log weights and gradients after update'''
-            self.tensorboard_writer.add_scalar(tag='train loss', scalar_value=loss.cpu().detach().item(), global_step=epoch*step)
+            self.tensorboard_writer.add_scalar(tag='train loss', scalar_value=loss.cpu().detach().item(), global_step=self.global_step)
             self.tensorboard_writer.add_histogram(tag="fc weight", values=self.model.fc.weight,
-                                                  global_step=epoch * step)
+                                                  global_step=self.global_step)
             self.tensorboard_writer.add_histogram(tag='fc layer bias', values=self.model.fc.bias,
-                                                  global_step=epoch * step)
+                                                  global_step=self.global_step)
             self.tensorboard_writer.add_histogram(tag="fc layer weight grad", values=self.model.fc.weight.grad,
-                                                  global_step=epoch * step)
+                                                  global_step=self.global_step)
             self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
-                                                  global_step=epoch * step)
-
+                                                  global_step=self.global_step)
+            if not self.model.frozen:
+                self.tensorboard_writer.add_histogram(tag='lm head weight', values=self.model.encoder.wav2vec2.lm_head.weight)
             self.optim.zero_grad()
-            if self.use_warmup and step*epoch <= self.warmup_steps:
+            if self.use_warmup and self.global_step <= self.warmup_steps:
                 self.lr_rampup()
-            elif self.use_warmup and step*epoch > self.warmup_steps:
+            elif self.use_warmup and self.global_step > self.warmup_steps:
                 self.lr_decay()
             if self.model.frozen is True and step*epoch == self.unfreeze_after:
                 '''unfreeze pretrained layer for last steps'''
                 self.model.unfreeze_pretrained()
-            self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=epoch*step)
+            self.tensorboard_writer.add_scalar(tag='lr', scalar_value=self.lr, global_step=self.global_step)
             sum_loss += loss.cpu().detach().item()
         self.avg_train_loss = sum_loss/step
 

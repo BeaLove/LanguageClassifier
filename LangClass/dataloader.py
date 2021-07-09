@@ -5,7 +5,7 @@ import torchaudio
 import os
 
 class SentenceData(Dataset):
-    def __init__(self, dataset_dir, sample_len=5):
+    def __init__(self, dataset_dir, sample_len=4):
         self.data_dir = dataset_dir
         self.sample_len = sample_len
         self.lang_code = []
@@ -28,7 +28,7 @@ class SentenceData(Dataset):
         wav, samplerate = torchaudio.load(path)
         clip_len = samplerate*self.sample_len
         #zero-pad short clips:
-        '''if wav.shape[1] < clip_len:
+        if wav.shape[1] < clip_len:
             pad_size = clip_len - wav.shape[1]
             pad = wav[:,:pad_size]
             sample = torch.cat((wav, pad), dim=1)
@@ -39,9 +39,9 @@ class SentenceData(Dataset):
         elif wav.shape[1] >= clip_len:
             sample = wav[:,:clip_len]
         if sample.shape[1] != clip_len:
-            print(path, "sample wrong", wav.shape[1])'''
+            print(path, "sample wrong", wav.shape[1])
         target = self.lang_idx[item]
-        return wav, target
+        return sample, target
 
 if __name__== '__main__':
     """debug code"""

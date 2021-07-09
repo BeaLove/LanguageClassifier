@@ -108,8 +108,6 @@ class Trainer():
                                                   global_step=self.global_step)
             self.tensorboard_writer.add_histogram(tag="fc layer bias grad", values=self.model.fc.bias.grad,
                                                   global_step=self.global_step)
-            if not self.model.frozen:
-                self.tensorboard_writer.add_histogram(tag='lm head weight', values=self.model.encoder.wav2vec2.lm_head.weight)
             self.optim.zero_grad()
             if self.use_warmup and self.global_step <= self.warmup_steps:
                 self.lr_rampup()

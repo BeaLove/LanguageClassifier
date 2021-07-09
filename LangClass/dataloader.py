@@ -91,8 +91,9 @@ class Voxlingua(Dataset):
 
 class PadSequence():
     def __call__(self, batch):
-        unpacked, lengths_packed = torch.nn.utils.rnn.pad_packed_sequence(batch, batch_first=True)
-        return unpacked
+        samples, labels = batch
+        unpacked, lengths_packed = torch.nn.utils.rnn.pad_packed_sequence(samples, batch_first=True)
+        return unpacked, labels
 
 if __name__== '__main__':
     """debug code"""

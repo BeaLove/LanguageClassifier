@@ -88,7 +88,9 @@ class Trainer():
             y = y.to(self.device)
             output = self.model.forward(x)
             loss = self.loss_criterion(output, y)
+            total_losses.append(loss)
             loss.backward()
+
             ##try gradient clipping
             torch.nn.utils.clip_grad_value_(parameters=self.model.parameters(), clip_value=0.5)
             self.optim.step()

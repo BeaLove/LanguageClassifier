@@ -15,4 +15,3 @@ For full options type python train.py -h help
 *Testing the model*
 python test.py --model_checkpoint= <specify path to model checkpoint to test> --test_data_dir=<specify path to test data directory>
 
-The best performing checkpoints will be uploaded to GitHub.
